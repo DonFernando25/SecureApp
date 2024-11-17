@@ -17,10 +17,16 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from users.views import register
+from django.http import HttpResponse
+from users import views
 
+
+def home(request):
+    return HttpResponse("Bienvenido a SecureApp")
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', views.home, name='home'),
     path('register/', register, name='register'),
 ]
