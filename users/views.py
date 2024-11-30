@@ -16,22 +16,17 @@ def register_user(request):
         username = request.POST.get("username")
         password = request.POST.get("password")
         hashed_password = hash_password(password)
-        try:
-            response = supabase.table('users').insert({
-                "username": username,
-                "password": hashed_password,
-            }).execute()
-
-            if response.status_code == 201:
-                messages.success(request, "Usuario registrado exitosamente.")
-                return redirect('login')  
-            else:
-                messages.error(request, "Hubo un problema al registrar al usuario.")
-        except Exception as e:
-            messages.error(request, f"Error: {str(e)}")
+        response = supabase.table('users').insert({
+            "username": username,
+            "password": hashed_password,
+        }).execute()
+        if response.error:
+            messages.error(request, f"Error: {response.error['message']}")
+        else:
+            messages.success(request, "Usuario registrado exitosamente.")
+            return redirect('login')  
 
     return render(request, 'register.html')
-
 
 @login_required
 def home_view(request):
