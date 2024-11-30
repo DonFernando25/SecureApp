@@ -1,18 +1,14 @@
-from django.contrib.auth import login, authenticate,logout
+from django.contrib.auth import login, authenticate, logout
 from django.shortcuts import render, redirect
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from supabase_config import supabase
-from .utils import hash_password, check_password
+from django.contrib.auth.hashers import make_password, check_password
 from django.contrib import messages
 from datetime import datetime, timedelta
 from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
-from django.contrib.auth.hashers import make_password
-
-
-
 
 
 def register_user(request):
@@ -30,6 +26,7 @@ def register_user(request):
             messages.error(request, f"Error en la contraseña: {e.message}")
             return render(request, 'register.html')
         hashed_password = make_password(password)
+        
         try:
             response = supabase.table('users').insert({
                 "username": username,
@@ -37,15 +34,15 @@ def register_user(request):
                 "failed_attempts": 0,
                 "locked_until": None
             }).execute()
-            if response.error: 
-                messages.error(request, f"Error al registrar usuario: {response.error.message}")
-            elif response.data:  
+            
+            if response.data:
                 messages.success(request, "Usuario registrado exitosamente. Ahora puedes iniciar sesión.")
                 return redirect('login')
             else:
                 messages.error(request, "No se pudo registrar el usuario. Inténtalo de nuevo.")
         except Exception as e:
             messages.error(request, f"Error al registrar usuario: {str(e)}")
+    
     return render(request, 'register.html')
 
 
@@ -76,7 +73,7 @@ def login_view(request):
                 }).eq("username", username).execute()
                 request.session.cycle_key()
                 request.session['user_id'] = user['id']
-                request.session.set_expiry(3600)  
+                request.session.set_expiry(3600)
                 messages.success(request, "Inicio de sesión exitoso.")
                 return redirect('home')
             else:
@@ -95,6 +92,7 @@ def login_view(request):
                     messages.error(request, f"Contraseña incorrecta. Intentos restantes: {3 - failed_attempts}")
         else:
             messages.error(request, "Usuario no encontrado.")
+    
     return render(request, 'login.html')
 
 
@@ -103,11 +101,11 @@ def home_view(request):
         return redirect('login')
     return render(request, 'home.html')
 
-
 def logout_view(request):
     logout(request)
     messages.success(request, "Sesión cerrada exitosamente.")
     return redirect('login')
+
 
 def validate_username(username):
     validator = RegexValidator(
@@ -115,7 +113,6 @@ def validate_username(username):
         message="El nombre de usuario solo puede contener letras, números y guiones bajos."
     )
     validator(username)
-
 
 def validate_password(password):
     if len(password) < 8:
