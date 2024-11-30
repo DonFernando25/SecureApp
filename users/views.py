@@ -6,6 +6,7 @@ from django.http import HttpResponse
 from supabase_config import supabase
 from .utils import hash_password, check_password
 from django.contrib import messages
+from supabase.lib.client_options import SupabaseException
 
 
 
@@ -16,15 +17,20 @@ def register_user(request):
         username = request.POST.get("username")
         password = request.POST.get("password")
         hashed_password = hash_password(password)
-        response = supabase.table('users').insert({
-            "username": username,
-            "password": hashed_password,
-        }).execute()
-        if response.error:
-            messages.error(request, f"Error: {response.error['message']}")
-        else:
-            messages.success(request, "Usuario registrado exitosamente.")
-            return redirect('login')  
+
+        try:
+            response = supabase.table('users').insert({
+                "username": username,
+                "password": hashed_password,
+            }).execute()
+            if response.data:
+                messages.success(request, "Usuario registrado exitosamente.")
+                return redirect('login') 
+            else:
+                messages.error(request, "No se pudo registrar el usuario. Inténtalo de nuevo.")
+
+        except SupabaseException as e:
+            messages.error(request, f"Error al registrar usuario: {str(e)}")
 
     return render(request, 'register.html')
 
