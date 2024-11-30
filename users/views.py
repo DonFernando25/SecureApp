@@ -6,7 +6,7 @@ from django.http import HttpResponse
 from supabase_config import supabase
 from .utils import hash_password, check_password
 from django.contrib import messages
-
+from datetime import datetime, timedelta
 
 
 
@@ -40,18 +40,43 @@ def login_view(request):
         username = request.POST.get("username")
         password = request.POST.get("password")
         response = supabase.table('users').select("*").eq("username", username).execute()
+
         if response.data:
-            user = response.data[0] 
+            user = response.data[0]
+            if user['locked_until'] and datetime.strptime(user['locked_until'], '%Y-%m-%dT%H:%M:%S.%f') > datetime.utcnow():
+                messages.error(request, "La cuenta está bloqueada. Intenta nuevamente más tarde.")
+                return render(request, 'login.html')
             if check_password(password, user["password"]):
-                request.session['user_id'] = user['id'] 
+                supabase.table('users').update({
+                    "failed_attempts": 0,
+                    "locked_until": None
+                }).eq("username", username).execute()
+                request.session['user_id'] = user['id']
                 messages.success(request, "Inicio de sesión exitoso.")
                 return redirect('home')
             else:
-                messages.error(request, "Contraseña incorrecta.")
+                failed_attempts = user['failed_attempts'] + 1
+
+                if failed_attempts >= 3:
+                    locked_until = datetime.utcnow() + timedelta(minutes=5)
+                    supabase.table('users').update({
+                        "failed_attempts": failed_attempts,
+                        "locked_until": locked_until.isoformat()
+                    }).eq("username", username).execute()
+
+                    messages.error(request, "Has alcanzado el límite de intentos. La cuenta está bloqueada por 5 minutos.")
+                else:
+                    supabase.table('users').update({
+                        "failed_attempts": failed_attempts
+                    }).eq("username", username).execute()
+
+                    messages.error(request, f"Contraseña incorrecta. Intentos restantes: {3 - failed_attempts}")
+
         else:
             messages.error(request, "Usuario no encontrado.")
 
     return render(request, 'login.html')
+
 
 def home_view(request):
     if 'user_id' not in request.session:
