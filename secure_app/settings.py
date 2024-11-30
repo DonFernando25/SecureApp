@@ -134,3 +134,11 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 MESSAGE_TAGS = {
     messages.ERROR: 'danger',
 }
+
+# Configuración de cookies seguras
+
+SESSION_COOKIE_HTTPONLY = True  
+SESSION_COOKIE_SECURE = True  
+SESSION_COOKIE_SAMESITE = 'Lax'  
+SESSION_COOKIE_AGE = 3600
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
