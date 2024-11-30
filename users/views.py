@@ -52,16 +52,3 @@ def login_view(request):
     return render(request, 'login.html')
 
 
-@login_required
-def sql_injection_test(request):
-    if request.method == "POST":
-        sql_query = request.POST.get("sql_query")
-        from django.db import connection
-        try:
-            with connection.cursor() as cursor:
-                cursor.execute(sql_query)
-                results = cursor.fetchall()
-            return render(request, 'sql_test.html', {'results': results})
-        except Exception as e:
-            return render(request, 'sql_test.html', {'error': str(e)})
-    return render(request, 'sql_test.html')
