@@ -1,4 +1,4 @@
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate,logout
 from django.shortcuts import render, redirect
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
@@ -44,17 +44,27 @@ def login_view(request):
     if request.method == "POST":
         username = request.POST.get("username")
         password = request.POST.get("password")
-        try:
-            response = supabase.table('users').select("*").eq("username", username).execute()
-            user = response.data[0] if response.data else None
-            
-            if user and check_password(password, user['password']):
-                return HttpResponse("Inicio de sesión exitoso.")
+        response = supabase.table('users').select("*").eq("username", username).execute()
+        if response.data:
+            user = response.data[0] 
+            if check_password(password, user["password"]):
+                request.session['user_id'] = user['id'] 
+                messages.success(request, "Inicio de sesión exitoso.")
+                return redirect('home')
             else:
-                return HttpResponse("Credenciales inválidas.", status=401)
-        except Exception as e:
-            return HttpResponse(f"Error al autenticar: {str(e)}", status=500)
-    
+                messages.error(request, "Contraseña incorrecta.")
+        else:
+            messages.error(request, "Usuario no encontrado.")
+
     return render(request, 'login.html')
 
+def home_view(request):
+    if 'user_id' not in request.session:
+        return redirect('login')
+    return render(request, 'home.html')
 
+
+def logout_view(request):
+    logout(request)
+    messages.success(request, "Sesión cerrada exitosamente.")
+    return redirect('login')

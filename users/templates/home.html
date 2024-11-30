@@ -1,9 +1,19 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>SecureApp</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio</title>
 </head>
 <body>
-    <h1>Bienvenido a SecureApp</h1>
+    <nav>
+        <ul>
+            <li><a href="#">Inicio</a></li>
+            <li><a href="#" onclick="alert('Otra funcionalidad');">Opción 2</a></li>
+            <li><a href="{% url 'logout' %}">Cerrar sesión</a></li>
+        </ul>
+    </nav>
+    <h1>Bienvenido a la aplicación</h1>
+    <p>Aquí estará el contenido principal después de iniciar sesión.</p>
 </body>
 </html>
