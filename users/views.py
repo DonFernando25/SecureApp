@@ -37,16 +37,16 @@ def register_user(request):
                 "failed_attempts": 0,
                 "locked_until": None
             }).execute()
-            if response.status_code == 201:
+            if response.error: 
+                messages.error(request, f"Error al registrar usuario: {response.error.message}")
+            elif response.data:  
                 messages.success(request, "Usuario registrado exitosamente. Ahora puedes iniciar sesión.")
                 return redirect('login')
             else:
                 messages.error(request, "No se pudo registrar el usuario. Inténtalo de nuevo.")
         except Exception as e:
             messages.error(request, f"Error al registrar usuario: {str(e)}")
-
     return render(request, 'register.html')
-
 
 
 def login_view(request):
