@@ -17,7 +17,6 @@ def register_user(request):
         username = request.POST.get("username")
         password = request.POST.get("password")
         hashed_password = hash_password(password)
-
         try:
             response = supabase.table('users').insert({
                 "username": username,
@@ -30,7 +29,6 @@ def register_user(request):
                 messages.error(request, "No se pudo registrar el usuario. Inténtalo de nuevo.")
         except Exception as e:
             messages.error(request, f"Error al registrar usuario: {str(e)}")
-
     return render(request, 'register.html')
 
 
@@ -40,7 +38,6 @@ def login_view(request):
         username = request.POST.get("username")
         password = request.POST.get("password")
         response = supabase.table('users').select("*").eq("username", username).execute()
-
         if response.data:
             user = response.data[0]
             if user['locked_until'] and datetime.strptime(user['locked_until'], '%Y-%m-%dT%H:%M:%S.%f') > datetime.utcnow():
@@ -56,25 +53,20 @@ def login_view(request):
                 return redirect('home')
             else:
                 failed_attempts = user['failed_attempts'] + 1
-
                 if failed_attempts >= 3:
                     locked_until = datetime.utcnow() + timedelta(minutes=5)
                     supabase.table('users').update({
                         "failed_attempts": failed_attempts,
                         "locked_until": locked_until.isoformat()
                     }).eq("username", username).execute()
-
                     messages.error(request, "Has alcanzado el límite de intentos. La cuenta está bloqueada por 5 minutos.")
                 else:
                     supabase.table('users').update({
                         "failed_attempts": failed_attempts
                     }).eq("username", username).execute()
-
                     messages.error(request, f"Contraseña incorrecta. Intentos restantes: {3 - failed_attempts}")
-
         else:
             messages.error(request, "Usuario no encontrado.")
-
     return render(request, 'login.html')
 
 
